@@ -1,5 +1,7 @@
 package users
 
 type Repository interface {
-	CreateUser() string
+	CreateUser(*User) (*User, error)
+	GetUserByID(id int) (*User, error)
+	GetListUsers() ([]User, error)
 }

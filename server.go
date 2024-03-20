@@ -58,9 +58,9 @@ func (s *APIServer) RunServer() error {
 
 	// Инициализируем репозиторий для работы с БД
 
-	repoUsers := users.NewRepository(db)
+	repoUsers := users.NewRepository(db) // возвращает интерфейс Repository с методами для БД (CreateUser...)
 
-	usersHander := users.NewHandlerUsers(repoUsers)
+	usersHander := users.NewHandlerUsers(repoUsers) // Добавляет интерфейс Repository с методами для БД (CreateUser...) в хэндлеры
 	usersHander.RegisterHandlersUsers(s.router)
 
 	return http.ListenAndServe(s.serverConfig.BindAddr, s.router)

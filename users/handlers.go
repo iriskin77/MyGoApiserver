@@ -1,9 +1,13 @@
 package users
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,57 +24,86 @@ func NewHandlerUsers(repository Repository) *handlerUsers {
 }
 
 func (h *handlerUsers) RegisterHandlersUsers(router *mux.Router) {
-	router.HandleFunc("/createuser", h.CreateUser)
+	router.HandleFunc("/createuser", h.CreateUser).Methods("POST")
+	router.HandleFunc("/users/{id}", h.GetUserByID).Methods("GET")
+	router.HandleFunc("/users", h.GetListUsers).Methods("GET")
 }
 
 func (h *handlerUsers) CreateUser(w http.ResponseWriter, r *http.Request) {
-	res := h.repository.CreateUser()
-	w.Write([]byte(res))
+
+	type request struct {
+		Name          string `json:"name"`
+		Surname       string `json:"surname"`
+		Age           int    `json:"age"`
+		Password_hash string `json:"password_hash"`
+		Email         string `json:"email"`
+	}
+
+	req := &request{}
+	json.NewDecoder(r.Body).Decode(req)
+
+	newUser := &User{
+		Name:          req.Name,
+		Surname:       req.Surname,
+		Age:           req.Age,
+		Password_hash: req.Password_hash,
+		Email:         req.Email,
+	}
+
+	user, err := h.repository.CreateUser(newUser)
+
+	if err != nil {
+		logrus.Fatal("func (h *handlerUsers) CreateUser() didnt work")
+		return
+	}
+
+	resp, err := json.Marshal(user)
+	if err != nil {
+		logrus.Fatal("CreateUser")
+	}
+
+	w.Write([]byte(resp))
+
 }
 
-// 	type request struct {
-// 		Name          string `json:"name"`
-// 		Surname       string `json:"surname"`
-// 		Age           int    `json:"age"`
-// 		Password_hash string `json:"password_hash"`
-// 		Email         string `json:"email"`
-// 	}
+func (h *handlerUsers) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		req := &request{}
-// 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-// 			s.error(w, r, http.StatusBadRequest, err)
-// 		}
+	vars := mux.Vars(r)
+	id := vars["id"]
 
-// 		u := &User{
-// 			Name:          req.Name,
-// 			Surname:       req.Surname,
-// 			Age:           req.Age,
-// 			Password_hash: req.Password_hash,
-// 			Email:         req.Email,
-// 		}
-// 		// if err :=
-// 	}
+	userId, err := strconv.Atoi(id)
 
-// }
+	if err != nil {
+		// ... handle error
+		panic(err)
+	}
 
-// func (h *handlerUsers) GetUser(w http.ResponseWriter, r *http.Request) {
-// 	w.Write([]byte("ListUsers"))
-// }
+	user, err := h.repository.GetUserByID(userId)
+	if err != nil {
+		logrus.Fatal("func (h *handlerUsers) GetUserByID(id int) (*User, error)")
+	}
 
-// func (h *handlerUsers) GetListUsers(w http.ResponseWriter, r *http.Request) {
-// 	w.Write([]byte("ListUsers"))
-// }
+	fmt.Println(user)
 
-// func (h *handlerUsers) error(w.ResponseWriter, r *http.Request, code int, err error) {
-// 	s.respond(w, r, code, map[string]string{"error": err.Error()})
+	resp, err := json.Marshal(user)
+	if err != nil {
+		logrus.Fatal("CreateUser")
+	}
 
-// }
+	w.Write([]byte(resp))
 
-// func (h *handlerUsers) respond(w.ResponseWriter, r *http.Request, code int, data interface{}) {
-// 	w.WrtieHead(code)
-// 	if data != nil {
-// 		json.NewEncoder(w).Encode(data)
-// 	}
+}
 
-// }
+func (h *handlerUsers) GetListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.repository.GetListUsers()
+	if err != nil {
+		logrus.Fatal("func (h *handlerUsers) GetUserByID(id int) (*User, error)")
+	}
+
+	resp, err := json.Marshal(users)
+	if err != nil {
+		logrus.Fatal("CreateUser")
+	}
+
+	w.Write([]byte(resp))
+}
