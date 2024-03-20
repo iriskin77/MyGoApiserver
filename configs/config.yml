@@ -1,0 +1,9 @@
+port: "9090"
+
+db:
+   username: "pguser"
+   password: "pgpassword"
+   host: "localhost"
+   port: "4222"
+   dbname: "postgres"
+   sslmode: "disable"
