@@ -7,7 +7,7 @@ type ConfigServer struct {
 
 func NewConfigServer() *ConfigServer {
 	return &ConfigServer{
-		BindAddr: ":9090",
+		BindAddr: ":7070",
 		LogLevel: "debug",
 	}
 

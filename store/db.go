@@ -6,14 +6,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ConfigDB struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	DBName   string
-	SSLMode  string
-}
+// type ConfigDB struct {
+// 	Host     string
+// 	Port     string
+// 	Username string
+// 	Password string
+// 	DBName   string
+// 	SSLMode  string
+// }
 
 // Функция NewPostgresDB возвращает указатель на структуру sqlxDB
 func NewPostgresDB(cfg ConfigDB) (*sqlx.DB, error) {

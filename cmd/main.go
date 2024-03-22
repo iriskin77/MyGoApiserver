@@ -5,6 +5,7 @@ import (
 	"log"
 
 	goapiserver "github.com/iriskin77/goapiserver"
+	"github.com/iriskin77/goapiserver/store"
 	_ "github.com/lib/pq"
 )
 
@@ -13,8 +14,10 @@ func main() {
 
 	configServer := goapiserver.NewConfigServer()
 
+	configDB := store.NewConfigDB()
+
 	// Запуск сервера
-	s := goapiserver.NewApiServer(configServer)
+	s := goapiserver.NewApiServer(configServer, configDB)
 	if err := s.RunServer(); err != nil {
 		log.Fatal(err)
 	}
