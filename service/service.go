@@ -1,9 +1,18 @@
 package service
 
-import "github.com/iriskin77/goapiserver/repository"
+import (
+	"github.com/iriskin77/goapiserver/models"
+	"github.com/iriskin77/goapiserver/repository"
+)
 
 type Users interface {
-	CreateUser()
+	GetListUsers() ([]models.User, error)
+	UpdateUserByID(user *models.User) (*models.User, error)
+	DeleteUserByID(id int) error
+	GetUserByID(id int) (*models.User, error)
+	CreateUser(user *models.User) (int, error)
+	GenerateToken(username, passwrpd string) (string, error)
+	ParseToken(accessToken string) (int, error)
 }
 
 type Service struct {

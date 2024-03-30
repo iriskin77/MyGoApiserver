@@ -1,18 +1,24 @@
 package service
 
-import "github.com/iriskin77/goapiserver/repository"
+import (
+	"errors"
+	"time"
 
-// type Service struct {
-// 	repository *repository.Repository
-// }
+	"github.com/dgrijalva/jwt-go"
+	"github.com/iriskin77/goapiserver/models"
+	"github.com/iriskin77/goapiserver/repository"
+	"github.com/sirupsen/logrus"
+)
 
-// func NewUsersService(repo *repository.Repository) *Service {
-// 	return &Service{repository: repo}
-// }
+const (
+	tokenExpired = 12 * time.Hour
+	signingKey   = "ggrqqweqwe#1232wefjgkd"
+)
 
-// func (s *Service) CreateUser() {
-
-// }
+type tokenClaims struct {
+	jwt.StandardClaims
+	UserId int `json: id`
+}
 
 type ServiceUsers struct {
 	// создаем структуру, которая принимает репозиторий для работы с БД
@@ -24,8 +30,89 @@ func NewUsersService(repo repository.Users) *ServiceUsers {
 	return &ServiceUsers{repo: repo}
 }
 
-func (s *ServiceUsers) CreateUser() {
+func (s *ServiceUsers) GenerateToken(username, password string) (string, error) {
 
+	user, err := s.repo.GetUserByPasswordUsername(username, password)
+
+	if err != nil {
+		logrus.Fatal("Error: func (s *ServiceUsers) GenerateToken(): %s", err)
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(tokenExpired).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		user.Id})
+
+	return token.SignedString([]byte(signingKey))
+}
+
+// Функция для парсинга токена
+func (s *ServiceUsers) ParseToken(accessToken string) (int, error) {
+	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid signing method")
+		}
+
+		return []byte(signingKey), nil
+	})
+	
+	if err != nil {
+		return 0, err
+	}
+
+	claims, ok := token.Claims.(*tokenClaims)
+	if !ok {
+		return 0, errors.New("token claims are not of type *tokenClaims")
+	}
+
+	return claims.UserId, nil
+}
+
+func (s *ServiceUsers) CreateUser(user *models.User) (int, error) {
+	newUser, err := s.repo.CreateUser(user)
+	if err != nil {
+		logrus.Fatal("Error: func (s *ServiceUsers) CreateUser(user *models.User)")
+	}
+	return newUser, nil
+
+}
+
+func (s *ServiceUsers) GetUserByID(id int) (*models.User, error) {
+	userById, err := s.repo.GetUserByID(id)
+	if err != nil {
+		logrus.Fatal("Error: func (s *ServiceUsers) GetUserByID(id int)")
+	}
+
+	return userById, nil
+}
+
+func (s *ServiceUsers) GetListUsers() ([]models.User, error) {
+	users, err := s.repo.GetListUsers()
+
+	if err != nil {
+		logrus.Fatal("Error: func (s *ServiceUsers) GetUserByID(id int)")
+	}
+
+	return users, nil
+}
+
+func (s *ServiceUsers) UpdateUserByID(user *models.User) (*models.User, error) {
+	updatedUserById, err := s.repo.UpdateUserByID(user)
+
+	if err != nil {
+		logrus.Fatal("Error: func (s *ServiceUsers) GetUserByID(id int)")
+	}
+
+	return updatedUserById, nil
+}
+
+func (s *ServiceUsers) DeleteUserByID(id int) error {
+
+	err := s.repo.DeleteUserByID(id)
+
+	return err
 }
 
 // func (r *repository) CreateUser(user *User) (*User, error) {
